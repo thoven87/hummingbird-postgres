@@ -188,6 +188,41 @@ final class JobsTests: XCTestCase {
         }
         XCTAssertEqual(jobExecutionSequence.withLockedValue { $0 }, [5, 1])
     }
+    
+    func testPriorityJobs() async throws {
+        let jobIdentifer = JobIdentifier<Int>(#function)
+        let jobIdentifer2 = JobIdentifier<Int>(#function)
+        let expectation = XCTestExpectation(description: "TestJob.execute was called", expectedFulfillmentCount: 2)
+        let jobExecutionSequence: NIOLockedValueBox<[Int]> = .init([])
+        
+        try await self.testJobQueue(numWorkers: 1) { jobQueue in
+            jobQueue.registerJob(id: jobIdentifer) { parameters, context in
+                context.logger.info("Parameters=\(parameters)")
+                jobExecutionSequence.withLockedValue {
+                    $0.append(parameters)
+                }
+                try await Task.sleep(for: .milliseconds(Int.random(in: 10..<50)))
+                expectation.fulfill()
+            }
+            try await jobQueue.push(
+                id: jobIdentifer,
+                parameters: 1,
+                options: .init(
+                    priority: 5
+                )
+            )
+            try await jobQueue.push(id: jobIdentifer2, parameters: 5)
+            
+            let processingJobs = try await jobQueue.queue.getJobs(withStatus: .pending)
+            XCTAssertEqual(processingJobs.count, 1)
+            
+            await self.wait(for: [expectation], timeout: 10)
+            
+            let pendingJobs = try await jobQueue.queue.getJobs(withStatus: .pending)
+            XCTAssertEqual(pendingJobs.count, 0)
+        }
+        XCTAssertEqual(jobExecutionSequence.withLockedValue { $0 }, [1, 5])
+    }
 
     func testMultipleWorkers() async throws {
         let jobIdentifer = JobIdentifier<Int>(#function)

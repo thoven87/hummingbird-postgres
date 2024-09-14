@@ -140,7 +140,7 @@ public final class PostgresJobQueue: JobQueueDriver {
     }
     
     private func addJob(_ job: QueuedJob<JobID>, buffer: ByteBuffer, options: JobOptions, connection: PostgresClient) async throws {
-
+        /// TODO: compute debounce and update the query
         try await connection.query(
             """
             INSERT INTO job_queue (
@@ -149,7 +149,8 @@ public final class PostgresJobQueue: JobQueueDriver {
                 payload,
                 status,
                 delayed_until,
-                debounce_key
+                debounce_key,
+                priority
             )
             VALUES(
                 \(job.id),
@@ -157,7 +158,8 @@ public final class PostgresJobQueue: JobQueueDriver {
                 \(buffer),
                 \(Status.pending),
                 \(options.delayUntil),
-                MD5('\(job.id)|NOW()|\(Status.pending)')
+                MD5('\(job.id)|NOW()|\(Status.pending)'),
+                \(options.priority)
             )
             """,
             logger: logger
