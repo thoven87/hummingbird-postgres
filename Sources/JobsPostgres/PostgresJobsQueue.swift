@@ -82,7 +82,7 @@ public final class PostgresJobQueue: JobQueueDriver {
             pendingJobsInitialization: JobInitialization = .doNothing,
             failedJobsInitialization: JobInitialization = .rerun,
             processingJobsInitialization: JobInitialization = .rerun,
-            pollTime: Duration = .milliseconds(10)
+            pollTime: Duration = .milliseconds(100)
         ) {
             self.pendingJobsInitialization = pendingJobsInitialization
             self.failedJobsInitialization = failedJobsInitialization
