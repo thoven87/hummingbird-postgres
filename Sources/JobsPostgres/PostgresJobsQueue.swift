@@ -189,7 +189,7 @@ public final class PostgresJobQueue: JobQueueDriver {
 
     func popFirst() async throws -> QueuedJob<JobID>? {
         do {
-            let result = try await self.client.withTransaction(logger: self.logger) { connection -> Result<QueuedJob<JobID>?, Error> in
+            let result = try await self.client.withConnection { connection -> Result<QueuedJob<JobID>?, Error> in
                 while true {
                     try Task.checkCancellation()
 
