@@ -197,14 +197,13 @@ public final class PostgresJobQueue: JobQueueDriver {
                         """
                         DELETE FROM
                             _hb_pg_job_queue
-                        USING (
+                        WHERE job_id = (
                             SELECT job_id FROM _hb_pg_job_queue
                             WHERE (delayed_until IS NULL OR delayed_until <= NOW())
                             ORDER BY createdAt, delayed_until ASC
                             LIMIT 1
                             FOR UPDATE SKIP LOCKED
-                        ) queued
-                        WHERE queued.job_id = _hb_pg_job_queue.job_id
+                        )
                         RETURNING _hb_pg_job_queue.job_id
                         """,
                         logger: self.logger
