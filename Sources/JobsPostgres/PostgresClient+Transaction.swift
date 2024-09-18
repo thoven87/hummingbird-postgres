@@ -15,7 +15,7 @@
 import PostgresNIO
 
 extension PostgresClient {
-    func withTransaction<Value>(logger: Logger, _ process: (PostgresConnection) async throws -> Value) async throws -> Value {
+    func withTransaction<Value>(logger: Logger, _ process: @Sendable @escaping (PostgresConnection) async throws -> Value) async throws -> Value {
         try await withConnection { connection in
             do {
                 try await connection.query("BEGIN;", logger: logger)
